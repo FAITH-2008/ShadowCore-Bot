@@ -16,9 +16,22 @@ async function start() {
         sock.ev.on("creds.update", saveCreds);
 
         sock.ev.on("connection.update", (update) => {
-            const { connection } = update;
-            console.log("Connection status:", connection);
-        });
+    const { connection, qr } = update;
+
+    console.log("Connection update:", connection);
+
+    if (qr) {
+        console.log("SCAN THIS QR:", qr);
+    }
+
+    if (connection === "open") {
+        console.log("WhatsApp connected successfully!");
+    }
+
+    if (connection === "close") {
+        console.log("Connection closed. Restarting...");
+    }
+});
 
         sock.ev.on("messages.upsert", async ({ messages }) => {
             const msg = messages[0];
