@@ -1,37 +1,46 @@
-console.log("ShadowX Bot booting...");
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
+const P = require("pino");
 
-async function start() {
+console.log("🚀 ShadowX Bot starting...");
+
+async function startBot() {
     try {
-        const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
-        const P = require("pino");
-
-        const { state, saveCreds } = await useMultiFileAuthState("auth");
+        const { state, saveCreds } = await useMultiFileAuthState("./auth");
 
         const sock = makeWASocket({
             auth: state,
-            printQRInTerminal: true,
             logger: P({ level: "silent" })
         });
 
         sock.ev.on("creds.update", saveCreds);
 
         sock.ev.on("connection.update", (update) => {
-    const { connection, qr } = update;
+            const { connection, lastDisconnect, qr } = update;
 
-    console.log("Connection update:", connection);
+            console.log("📡 Connection status:", connection);
 
-    if (qr) {
-        console.log("SCAN THIS QR:", qr);
-    }
+            if (qr) {
+                console.log("📲 SCAN THIS QR (open WhatsApp → Linked devices):", qr);
+            }
 
-    if (connection === "open") {
-        console.log("WhatsApp connected successfully!");
-    }
+            if (connection === "open") {
+                console.log("✅ WhatsApp connected successfully!");
+            }
 
-    if (connection === "close") {
-        console.log("Connection closed. Restarting...");
-    }
-});
+            if (connection === "close") {
+                const reason = lastDisconnect?.error?.output?.statusCode;
+
+                console.log("❌ Connection closed. Reason:", reason);
+
+                // auto restart
+                if (reason !== DisconnectReason.loggedOut) {
+                    console.log("🔄 Restarting bot...");
+                    startBot();
+                } else {
+                    console.log("⚠️ Logged out. Please rescan QR.");
+                }
+            }
+        });
 
         sock.ev.on("messages.upsert", async ({ messages }) => {
             const msg = messages[0];
@@ -47,26 +56,27 @@ async function start() {
 
             const cmd = text.toLowerCase();
 
+            console.log("📩 Message:", cmd);
+
             if (cmd === "hi") {
-                await sock.sendMessage(from, { text: "Hello 👋 ShadowX Bot is online ⚡" });
+                await sock.sendMessage(from, { text: "Hello 👋 ShadowX Bot ⚡" });
             }
 
             if (cmd === "menu") {
                 await sock.sendMessage(from, {
-                    text: "🖤 ShadowX Menu\nhi\nmenu\nping"
+                    text: "🖤 ShadowX Bot Menu\nhi - greet\nmenu - commands\nping - test"
                 });
             }
 
             if (cmd === "ping") {
-                await sock.sendMessage(from, { text: "Pong 🏓" });
+                await sock.sendMessage(from, { text: "🏓 Pong! Bot is alive" });
             }
         });
 
     } catch (err) {
-        console.log("CRASH ERROR:", err);
+        console.log("💥 Fatal error:", err);
+        setTimeout(startBot, 5000);
     }
 }
 
-start();
-
-console.log("Bot initialized...");
+startBot();
