@@ -1,4 +1,51 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys")
+const { default: import makeWASocket, { useMultiFileAuthState, DisconnectReason } from "@whiskeysockets/baileys"
+
+async function startBot() {
+  const { state, saveCreds } = await useMultiFileAuthState("./session")
+
+  const sock = makeWASocket({
+    auth: state,
+    printQRInTerminal: false
+  })
+
+  sock.ev.on("creds.update", saveCreds)
+
+  const phoneNumber = "2348121254551" // change to your number
+
+  // 🔑 THIS GENERATES YOUR SERIAL / PAIRING CODE
+  if (!sock.authState.creds.registered) {
+    const code = await sock.requestPairingCode(phoneNumber)
+    console.log("PAIRING CODE:", code)
+  }
+
+  // connection handling
+  sock.ev.on("connection.update", (update) => {
+    const { connection, lastDisconnect } = update
+
+    if (connection === "close") {
+      const shouldReconnect =
+        lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
+
+      if (shouldReconnect) {
+        startBot()
+      }
+    }
+
+    if (connection === "open") {
+      console.log("Bot connected successfully ✅")
+    }
+  })
+
+  // simple message test
+  sock.ev.on("messages.upsert", async ({ messages }) => {
+    const msg = messages[0]
+    if (!msg.message) return
+
+    console.log("New message received")
+  })
+}
+
+startBot(), useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys")
 const P = require("pino")
 
 async function startBot() {
