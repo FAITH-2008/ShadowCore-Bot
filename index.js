@@ -1,11 +1,11 @@
 console.log("ShadowX Bot booting...");
 
-const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
-const P = require("pino");
-
-async function startBot() {
+async function start() {
     try {
-        const { state, saveCreds } = await useMultiFileAuthState("./auth");
+        const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
+        const P = require("pino");
+
+        const { state, saveCreds } = await useMultiFileAuthState("auth");
 
         const sock = makeWASocket({
             auth: state,
@@ -17,7 +17,7 @@ async function startBot() {
 
         sock.ev.on("connection.update", (update) => {
             const { connection } = update;
-            console.log("Connection:", connection);
+            console.log("Connection status:", connection);
         });
 
         sock.ev.on("messages.upsert", async ({ messages }) => {
@@ -35,12 +35,12 @@ async function startBot() {
             const cmd = text.toLowerCase();
 
             if (cmd === "hi") {
-                await sock.sendMessage(from, { text: "Hello 👋 ShadowX Bot ⚡" });
+                await sock.sendMessage(from, { text: "Hello 👋 ShadowX Bot is online ⚡" });
             }
 
             if (cmd === "menu") {
                 await sock.sendMessage(from, {
-                    text: "🖤 ShadowX Menu\nhi - greet\nmenu - commands\nping - test"
+                    text: "🖤 ShadowX Menu\nhi\nmenu\nping"
                 });
             }
 
@@ -50,10 +50,10 @@ async function startBot() {
         });
 
     } catch (err) {
-        console.log("Error starting bot:", err);
+        console.log("CRASH ERROR:", err);
     }
 }
 
-startBot();
+start();
 
-console.log("Bot started (waiting for WhatsApp connection)...");
+console.log("Bot initialized...");
