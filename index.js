@@ -1,4 +1,4 @@
-const { default: import makeWASocket, { useMultiFileAuthState, DisconnectReason } from "@whiskeysockets/baileys"
+const { default: import requestPairingCode, { useMultiFileAuthState, DisconnectReason } from "@whiskeysockets/baileys"
 
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("./session")
