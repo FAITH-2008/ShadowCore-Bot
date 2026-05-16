@@ -11,7 +11,7 @@ const client = new Client({
 });
 
 client.on("qr", (qr) => {
-    console.log("📲requestPairingCode);
+    console.log("📲Scan this QR in WhatsApp);
     console.log(qr);
 });
 
