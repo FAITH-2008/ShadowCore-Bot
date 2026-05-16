@@ -1,13 +1,12 @@
 {
   "name": "shadowx-bot",
   "version": "1.0.0",
-  "description": "ShadowX WhatsApp Bot",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "latest",
-    "pino": "latest"
+    "@whiskeysockets/baileys": "^6.7.8",
+    "pino": "^8.17.2"
   }
 }
