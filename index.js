@@ -1,82 +1,38 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
-const P = require("pino");
-
 console.log("🚀 ShadowX Bot starting...");
 
-async function startBot() {
-    try {
-        const { state, saveCreds } = await useMultiFileAuthState("./auth");
+const { Client, LocalAuth } = require("whatsapp-web.js");
 
-        const sock = makeWASocket({
-            auth: state,
-            logger: P({ level: "silent" })
-        });
-
-        sock.ev.on("creds.update", saveCreds);
-
-        sock.ev.on("connection.update", (update) => {
-            const { connection, lastDisconnect, qr } = update;
-
-            console.log("📡 Connection status:", connection);
-
-            if (qr) {
-                console.log("📲 SCAN THIS QR (open WhatsApp → Linked devices):", qr);
-            }
-
-            if (connection === "open") {
-                console.log("✅ WhatsApp connected successfully!");
-            }
-
-            if (connection === "close") {
-                const reason = lastDisconnect?.error?.output?.statusCode;
-
-                console.log("❌ Connection closed. Reason:", reason);
-
-                // auto restart
-                if (reason !== DisconnectReason.loggedOut) {
-                    console.log("🔄 Restarting bot...");
-                    startBot();
-                } else {
-                    console.log("⚠️ Logged out. Please rescan QR.");
-                }
-            }
-        });
-
-        sock.ev.on("messages.upsert", async ({ messages }) => {
-            const msg = messages[0];
-            if (!msg.message) return;
-
-            const from = msg.key.remoteJid;
-
-            const text =
-                msg.message.conversation ||
-                msg.message.extendedTextMessage?.text;
-
-            if (!text) return;
-
-            const cmd = text.toLowerCase();
-
-            console.log("📩 Message:", cmd);
-
-            if (cmd === "hi") {
-                await sock.sendMessage(from, { text: "Hello 👋 ShadowX Bot ⚡" });
-            }
-
-            if (cmd === "menu") {
-                await sock.sendMessage(from, {
-                    text: "🖤 ShadowX Bot Menu\nhi - greet\nmenu - commands\nping - test"
-                });
-            }
-
-            if (cmd === "ping") {
-                await sock.sendMessage(from, { text: "🏓 Pong! Bot is alive" });
-            }
-        });
-
-    } catch (err) {
-        console.log("💥 Fatal error:", err);
-        setTimeout(startBot, 5000);
+const client = new Client({
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"]
     }
-}
+});
 
-startBot();
+client.on("qr", (qr) => {
+    console.log("📲 SCAN THIS QR IN WHATSAPP:");
+    console.log(qr);
+});
+
+client.on("ready", () => {
+    console.log("✅ WhatsApp Bot is READY!");
+});
+
+client.on("message", async (msg) => {
+    const text = msg.body.toLowerCase();
+
+    if (text === "hi") {
+        msg.reply("Hello 👋 ShadowX Bot is online ⚡");
+    }
+
+    if (text === "menu") {
+        msg.reply("🖤 ShadowX Menu\nhi - greet\nmenu - commands\nping - test");
+    }
+
+    if (text === "ping") {
+        msg.reply("🏓 Pong! Bot is alive");
+    }
+});
+
+client.initialize();
